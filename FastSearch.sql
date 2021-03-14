@@ -29,16 +29,10 @@ CREATE TABLE [dbo].[WordFragments] (
 GO
 
 CREATE TRIGGER T_Create_Word_Fragments ON [dbo].[Words]
-   FOR INSERT, UPDATE, DELETE
+   FOR INSERT
 AS 
 BEGIN
   SET NOCOUNT ON;
-  IF EXISTS(SELECT 0 FROM deleted)
-  BEGIN
-    DELETE wf FROM dbo.WordFragments wf
-	INNER JOIN deleted ON wf.WordId = deleted.WordId
-	WHERE deleted.WordId = wf.WordId;
-  END;
 
   WITH frag(WordId, ind) AS
   (
@@ -54,17 +48,29 @@ BEGIN
 END
 GO
 
+-- Random Data Population
 DECLARE @Word nvarchar(50);
 DECLARE @count int = 1;
-WHILE @count <= 1000000
+DECLARE @error int = 0;
+SET NOCOUNT ON;
+WHILE @count <= 10000
 BEGIN
   SELECT @Word = CONVERT(bigint, ROUND((99999999999999999-11111111111111111)*RAND()+11111111111111111, 0));
   IF (NOT EXISTS(SELECT 1 FROM [dbo].[Words] WHERE Word = @Word))
   BEGIN
-    INSERT INTO [dbo].[Words] ([Word]) VALUES (CONVERT(bigint, ROUND((99999999999999999-11111111111111111)*RAND()+11111111111111111, 0)));
+    INSERT INTO [dbo].[Words] ([Word]) VALUES (@Word);
+	SET @count = @count + 1;
   END
-  SET @count = @count+1
+  ELSE
+  BEGIN
+    SET @error = @error + 1;
+	IF @error > 1000
+	BEGIN
+	  BREAK
+	END
+  END
 END;
 GO
 
-
+SELECT COUNT(1) FROM dbo.Words
+SELECT COUNT(1) FROM dbo.WordFragments
