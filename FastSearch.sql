@@ -28,6 +28,21 @@ CREATE TABLE [dbo].[WordFragments] (
 );
 GO
 
+CREATE TRIGGER T_Delete_Word_Fragements ON [dbo].[Words]
+	INSTEAD OF DELETE
+AS
+BEGIN
+	SET NOCOUNT ON;
+	DELETE wf
+	FROM WordFragments wf
+	INNER JOIN deleted ON wf.WordId = deleted.WordId
+
+	DELETE w
+	FROM Words w
+	INNER JOIN deleted ON w.WordId = deleted.WordId
+END
+GO
+
 CREATE TRIGGER T_Create_Word_Fragments ON [dbo].[Words]
    FOR INSERT
 AS 
